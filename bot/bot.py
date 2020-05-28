@@ -1,5 +1,7 @@
 import apiai
 import json
+import wikipedia
+from googletrans import Translator
 
 
 class Bot():
@@ -7,18 +9,26 @@ class Bot():
         print(f'Погода для запроса: {req}')
 
     def random_gif(self, req: str):
-        return " gif "
+        return None
 
     def translate(self, req: str):
-        return 'tranlate'
+        return None
 
     def get_answer(self, req: str):
-        return 'getanswer'
+        return None
 
     def say_random_answer(self, req: str):
-        return 'sayrandomanswer'
+        return None
 
-    dep_commands = {'погода': weather, }
+    def wiki(self, req: str):
+        print(f'wiki {req}')
+        try:
+            wikipedia.set_lang("ru")
+            return wikipedia.summary(req, sentences=4)
+        except wikipedia.WikipediaException:
+            return None
+
+    dep_commands = {'погода': weather, 'wiki': wiki}
     undep_commands = [translate, get_answer, say_random_answer]
 
     def __init__(self):
@@ -27,7 +37,7 @@ class Bot():
     def get_answer(self, req=''):
         for elem in self.dep_commands:
             if elem in req:
-                return self.dep_commands.get(elem)(self, req=req)
+                return self.dep_commands.get(elem)(self, req.replace(elem, ''))
         for elem in self.dep_commands:
             answer = self.dep_commands.get(elem)(self, req)
             if answer is not None:
