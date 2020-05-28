@@ -6,13 +6,18 @@ from googletrans import Translator
 
 class Bot():
     def weather(self, req: str):
-        print(f'Погода для запроса: {req}')
+        return None
 
     def random_gif(self, req: str):
         return None
 
     def translate(self, req: str):
-        return None
+        translator = Translator()
+        inplang = str(translator.detect(req).lang)
+        if inplang != 'ru':
+            translations = translator.translate([req], dest='ru')
+            for translation in translations:
+                return translation.text
 
     def get_answer(self, req: str):
         return None
@@ -35,11 +40,14 @@ class Bot():
         self.APIKEY = 'f07aa55b08e84306a74e9fef2639b1c8'
 
     def get_answer(self, req=''):
+
         for elem in self.dep_commands:
             if elem in req:
+                print(elem + ' is in ' + req)
                 return self.dep_commands.get(elem)(self, req.replace(elem, ''))
-        for elem in self.dep_commands:
-            answer = self.dep_commands.get(elem)(self, req)
+
+        for elem in self.undep_commands:
+            answer = elem(self, req)
             if answer is not None:
                 return answer
         return " -- "
