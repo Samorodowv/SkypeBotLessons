@@ -1,10 +1,37 @@
-import apiai
 import json
+
+import apiai
+import requests
 import wikipedia
+from bs4 import BeautifulSoup
 from googletrans import Translator
 
 
 class Bot():
+    zodiac_dict = {'овен': 'aries',
+                   'телец': 'taurus',
+                   'близнецы': 'gemini',
+                   'рак': 'cancer',
+                   'лев': 'leo',
+                   'дева': 'virgo',
+                   'весы': 'libra',
+                   'скорпион': 'scorpio',
+                   'стрелец': 'sagittarius',
+                   'козерог': 'capricorn',
+                   'водолей': 'aquarius',
+                   'рыбы': 'pisces',
+                   }
+
+    def __init__(self):
+        self.APIKEY = 'f07aa55b08e84306a74e9fef2639b1c8'
+
+    def get_fortune(self, req: str):
+        for zodiac in self.zodiac_dict:
+            if zodiac in req:
+                r = requests.get('https://1001goroskop.ru/', params={'znak': self.zodiac_dict.get(zodiac)})
+                soup = BeautifulSoup(r.text, 'html.parser')
+                return soup.find(itemprop='description').get_text()
+
     def weather(self, req: str):
         return None
 
@@ -13,17 +40,21 @@ class Bot():
 
     def translate(self, req: str):
         translator = Translator()
-        inplang = str(translator.detect(req).lang)
-        if inplang != 'ru':
+        inp_lang = translator.detect(req).lang
+        if inp_lang != 'ru':
             translations = translator.translate([req], dest='ru')
             for translation in translations:
-                return translation.text
+                if translator.detect(translation.text).lang != inp_lang:
+                    return translation.text
 
     def get_answer(self, req: str):
-        return None
-
-    def say_random_answer(self, req: str):
-        return None
+        request = apiai.ApiAI(self.APIKEY).text_request()
+        request.lang = 'ru'
+        request.session_id = 'BatlabAIBot'
+        request.query = req
+        responseJson = json.loads(request.getresponse().read().decode('utf-8'))
+        response = responseJson['result']['fulfillment']['speech']
+        return response
 
     def wiki(self, req: str):
         print(f'wiki {req}')
@@ -34,13 +65,9 @@ class Bot():
             return None
 
     dep_commands = {'погода': weather, 'wiki': wiki}
-    undep_commands = [translate, get_answer, say_random_answer]
+    undep_commands = [translate, get_fortune, get_answer]
 
-    def __init__(self):
-        self.APIKEY = 'f07aa55b08e84306a74e9fef2639b1c8'
-
-    def get_answer(self, req=''):
-
+    def get_answer(self, req: str):
         for elem in self.dep_commands:
             if elem in req:
                 print(elem + ' is in ' + req)
