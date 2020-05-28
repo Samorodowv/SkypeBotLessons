@@ -1,58 +1,45 @@
-from skpy import  SkypeEventLoop, SkypeNewMessageEvent
-import apiai, json
-import shelve
+import apiai
+import json
 
-def help():
-    print(
-    """
-    Чтобы воспользоваться ботом нужны следующие данные:
-    Логин и пароль от скайпа
-    а так же регистрация на сайте dialoglow
-    """)
 
-dialogflowtoken = None
-skypemail = None 
-skypepassw = None
+class Bot():
+    def weather(self, req: str):
+        print(f'Погода для запроса: {req}')
 
-with shelve.open('passw') as db:
-    dialogflowtoken = db.get('dialogflowtoken')
-    skypemail       = db.get('skypemail') 
-    skypepassw      = db.get('skypepassw')
-    if dialogflowtoken is None or skypemail is None or skypepassw is None:
-        help()
+    def random_gif(self, req: str):
+        return " gif "
 
-    if not dialogflowtoken:
-        db['dialogflowtoken'] = input('Введите dialogflowtoken: ').strip()
-        dialogflowtoken       = db['dialogflowtoken']
-    if not skypemail:
-        db['skypemail']       = input('Введите email от скайп: ').strip()
-        skypemail             = db['skypemail'] 
-    if not skypepassw:
-        db['skypepassw']      = input('Введите пароль от скайп: ').strip()
-        skypepassw            = db['skypepassw']
+    def translate(self, req: str):
+        return 'tranlate'
 
-def get_bot_respose(question = ""):
-    request = apiai.ApiAI(dialogflowtoken).text_request() 
-    request.lang = 'ru'
-    request.session_id = 'BatlabAIBot'
-    request.query = question
-    responseJson = json.loads(request.getresponse().read().decode('utf-8'))
-    if responseJson:
-        return responseJson['result']['fulfillment']['speech']
-    else:
-        return "Извините, я не понял вопроса, я пока что только учусь"
+    def get_answer(self, req: str):
+        return 'getanswer'
 
-class Skype(SkypeEventLoop):
-    def onEvent(self, event):
-        if isinstance(event, SkypeNewMessageEvent) and not event.msg.userId == self.userId:
-            ansnwer = get_bot_respose(event.msg.content)
-            event.msg.chat.sendMsg(ansnwer)
+    def say_random_answer(self, req: str):
+        return 'sayrandomanswer'
 
-skype = Skype(skypemail, skypepassw,'token.txt')
-while True:
-    try:
-        print('SkypeBot работает')
-        skype.loop()
-    except Exception as e:
-        print(e)
-        skype = Skype(skypemail, skypepassw, 'token.txt')
+    dep_commands = {'погода': weather, }
+    undep_commands = [translate, get_answer, say_random_answer]
+
+    def __init__(self):
+        self.APIKEY = 'f07aa55b08e84306a74e9fef2639b1c8'
+
+    def get_answer(self, req=''):
+        for elem in self.dep_commands:
+            if elem in req:
+                return self.dep_commands.get(elem)(self, req=req)
+        for elem in self.dep_commands:
+            answer = self.dep_commands.get(elem)(self, req)
+            if answer is not None:
+                return answer
+        return " -- "
+
+
+if __name__ == "__main__":
+    bot = Bot()
+    while True:
+        req = input("Задайте вопрос боту: ")
+        if 'exit' in req:
+            break
+        answer = bot.get_answer(req)
+        print(answer)
