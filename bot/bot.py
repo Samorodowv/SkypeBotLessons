@@ -1,6 +1,8 @@
 import json
+from random import choice
 
 import apiai
+import giphy_client
 import requests
 import wikipedia
 from bs4 import BeautifulSoup
@@ -23,7 +25,12 @@ class Bot():
                    }
 
     def __init__(self):
-        self.APIKEY = 'f07aa55b08e84306a74e9fef2639b1c8'
+        self.dialogflow_key = None
+        self.giphy_key = None
+
+    def set_keys(self, dialogflow_key: str, giphy_key: str):
+        self.dialogflow_key = dialogflow_key
+        self.giphy_key = giphy_key
 
     def get_fortune(self, req: str):
         for zodiac in self.zodiac_dict:
@@ -33,10 +40,17 @@ class Bot():
                 return soup.find(itemprop='description').get_text()
 
     def weather(self, req: str):
-        return None
+        # img = Image.open(BytesIO(requests.get(f"http://wttr.in/{req.strip()}.png").content))
+        # img.show()
+        return requests.get(f"http://wttr.in/{req.strip()}.png").url
 
     def random_gif(self, req: str):
-        return None
+        api_instance = giphy_client.DefaultApi()
+        #api_key = 'XPY9nG1Z28Ypu2mK8wrHGEzC8UAZW1Ts'
+        api_response = api_instance.gifs_search_get(self.giphy_key, req.strip(), lang='ru')
+        data = api_response.data
+        result = choice(data)
+        return result.images.original.url
 
     def translate(self, req: str):
         translator = Translator()
@@ -48,7 +62,7 @@ class Bot():
                     return translation.text
 
     def get_answer(self, req: str):
-        request = apiai.ApiAI(self.APIKEY).text_request()
+        request = apiai.ApiAI(self.dialogflow_key).text_request()
         request.lang = 'ru'
         request.session_id = 'BatlabAIBot'
         request.query = req
@@ -57,20 +71,18 @@ class Bot():
         return response
 
     def wiki(self, req: str):
-        print(f'wiki {req}')
         try:
             wikipedia.set_lang("ru")
             return wikipedia.summary(req, sentences=4)
         except wikipedia.WikipediaException:
             return None
 
-    dep_commands = {'погода': weather, 'wiki': wiki}
+    dep_commands = {'погода': weather, 'wiki': wiki, '-w': weather, '-gif': random_gif}
     undep_commands = [translate, get_fortune, get_answer]
 
     def get_answer(self, req: str):
         for elem in self.dep_commands:
             if elem in req:
-                print(elem + ' is in ' + req)
                 return self.dep_commands.get(elem)(self, req.replace(elem, ''))
 
         for elem in self.undep_commands:
