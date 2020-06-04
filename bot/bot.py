@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from googletrans import Translator
 
 
-class Bot():
+class Bot:
     zodiac_dict = {'овен': 'aries',
                    'телец': 'taurus',
                    'близнецы': 'gemini',
@@ -23,10 +23,11 @@ class Bot():
                    'водолей': 'aquarius',
                    'рыбы': 'pisces',
                    }
-
+    """
     def __init__(self):
         self.dialogflow_key = None
         self.giphy_key = None
+    """
 
     def set_keys(self, dialogflow_key: str, giphy_key: str):
         self.dialogflow_key = dialogflow_key
